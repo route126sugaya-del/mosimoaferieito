@@ -1,0 +1,61 @@
+name: Generate Affiliate Articles
+
+on:
+  schedule:
+    # 毎日 UTC 23:00 (JST 翌8:00) に実行
+    - cron: "0 23 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Generate and publish articles
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL }}
+          RAKUTEN_APP_ID: ${{ secrets.RAKUTEN_APP_ID }}
+          RAKUTEN_AFFILIATE_ID: ${{ secrets.RAKUTEN_AFFILIATE_ID }}
+          AMAZON_ACCESS_KEY: ${{ secrets.AMAZON_ACCESS_KEY }}
+          AMAZON_SECRET_KEY: ${{ secrets.AMAZON_SECRET_KEY }}
+          AMAZON_PARTNER_TAG: ${{ secrets.AMAZON_PARTNER_TAG }}
+          AMAZON_COUNTRY: ${{ vars.AMAZON_COUNTRY }}
+          MOSHIMO_RAKUTEN_A_ID: ${{ secrets.MOSHIMO_RAKUTEN_A_ID }}
+          MOSHIMO_RAKUTEN_P_ID: ${{ secrets.MOSHIMO_RAKUTEN_P_ID }}
+          MOSHIMO_RAKUTEN_PC_ID: ${{ secrets.MOSHIMO_RAKUTEN_PC_ID }}
+          MOSHIMO_RAKUTEN_PL_ID: ${{ secrets.MOSHIMO_RAKUTEN_PL_ID }}
+          MOSHIMO_AMAZON_A_ID: ${{ secrets.MOSHIMO_AMAZON_A_ID }}
+          MOSHIMO_AMAZON_P_ID: ${{ secrets.MOSHIMO_AMAZON_P_ID }}
+          MOSHIMO_AMAZON_PC_ID: ${{ secrets.MOSHIMO_AMAZON_PC_ID }}
+          MOSHIMO_AMAZON_PL_ID: ${{ secrets.MOSHIMO_AMAZON_PL_ID }}
+          WP_BASE_URL: ${{ secrets.WP_BASE_URL }}
+          WP_USERNAME: ${{ secrets.WP_USERNAME }}
+          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+          WP_POST_STATUS: ${{ vars.WP_POST_STATUS }}
+          ARTICLES_PER_RUN: ${{ vars.ARTICLES_PER_RUN }}
+        run: python -m moshimo_articles.main
+
+      - name: Commit published history
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/published_history.json
+          git diff --cached --quiet || git commit -m "chore: 記事生成履歴を更新"
+          git push
