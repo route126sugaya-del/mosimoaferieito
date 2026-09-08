@@ -37,10 +37,12 @@ def _make_config(rakuten_link=None, amazon_link=None) -> Config:
     return Config(
         anthropic_api_key="key",
         claude_model="claude-sonnet-5",
-        rakuten=RakutenConfig(app_id="app", affiliate_id=None, moshimo_link=rakuten_link or _EMPTY_LINK),
+        rakuten=RakutenConfig(
+            app_id="app", access_key="access-key", affiliate_id=None, moshimo_link=rakuten_link or _EMPTY_LINK
+        ),
         amazon=AmazonConfig(
-            access_key="a",
-            secret_key="s",
+            credential_id="cid",
+            credential_secret="csecret",
             partner_tag="t",
             country="JP",
             moshimo_link=amazon_link or _EMPTY_LINK,

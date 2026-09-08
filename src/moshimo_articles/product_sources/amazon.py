@@ -1,8 +1,11 @@
-"""Amazon Product Advertising API (PA-API 5.0) 連携。
+"""Amazon Creators API 連携。
 
-python-amazon-paapi (https://github.com/sergioteula/python-amazon-paapi) を利用する。
-PA-APIのアクセスキーは「直近180日で3件以上の紹介実績」が無いと失効するため、
-新規サイトでは楽天市場APIを主データソースにすることを推奨する。
+2026年5月にAmazon Product Advertising API (PA-API) v5が完全に終了し、
+後継の Amazon Creators API への移行が必須となった。認証方式もAWS Signature V4から
+OAuth 2.0(credential_id / credential_secret)に変わっている。
+python-amazon-paapi (https://github.com/sergioteula/python-amazon-paapi) の
+amazon_creatorsapi モジュールを利用する。認証情報はAmazonアソシエイト管理画面の
+「CreatorsAPI」タブから新規に発行する(旧PA-APIのアクセスキーは使えない)。
 """
 from __future__ import annotations
 
@@ -18,22 +21,27 @@ def search_products(config: AmazonConfig, keyword: str, hits: int = 10) -> list[
     """キーワードでAmazonの商品を検索する。"""
     if not config.is_configured:
         raise ValueError(
-            "AmazonConfig が未設定です(AMAZON_ACCESS_KEY / AMAZON_SECRET_KEY / AMAZON_PARTNER_TAG が必要)。"
+            "AmazonConfig が未設定です"
+            "(AMAZON_CREDENTIAL_ID / AMAZON_CREDENTIAL_SECRET / AMAZON_PARTNER_TAG が必要)。"
         )
 
     try:
-        from amazon_paapi import AmazonApi
+        from amazon_creatorsapi import AmazonCreatorsApi, Country
     except ImportError as exc:  # pragma: no cover
         raise ImportError(
             "python-amazon-paapi がインストールされていません。`pip install python-amazon-paapi` を実行してください。"
         ) from exc
 
-    api = AmazonApi(
-        config.access_key,
-        config.secret_key,
-        config.partner_tag,
-        config.country,
-        throttling=1.0,
+    country = getattr(Country, config.country.upper(), None)
+    if country is None:
+        raise ValueError(f"Amazon Creators APIが未対応の国コードです: {config.country}")
+
+    api = AmazonCreatorsApi(
+        credential_id=config.credential_id,
+        credential_secret=config.credential_secret,
+        version="2.2",
+        tag=config.partner_tag,
+        country=country,
     )
 
     result = api.search_items(keywords=keyword, item_count=min(hits, 10))
@@ -50,7 +58,7 @@ def search_products(config: AmazonConfig, keyword: str, hits: int = 10) -> list[
 def _to_product(item) -> Product:
     title = _safe_get(item, "item_info", "title", "display_value") or ""
     image_url = _safe_get(item, "images", "primary", "large", "url")
-    price = _safe_get(item, "offers", "listings", 0, "price", "amount")
+    price = _safe_get(item, "offers_v2", "listings", 0, "price", "money", "amount")
     detail_url = getattr(item, "detail_page_url", None) or ""
 
     features = _safe_get(item, "item_info", "features", "display_values") or []

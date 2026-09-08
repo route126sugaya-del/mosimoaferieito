@@ -40,7 +40,7 @@ def collect_candidates(config: Config, keyword: str) -> list[Product]:
         try:
             candidates.extend(amazon_source.search_products(config.amazon, keyword))
         except Exception:
-            logger.exception("Amazon PA-APIでの商品検索に失敗しました(keyword=%s)", keyword)
+            logger.exception("Amazon Creators APIでの商品検索に失敗しました(keyword=%s)", keyword)
 
     return candidates
 

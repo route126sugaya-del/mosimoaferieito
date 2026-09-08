@@ -13,17 +13,15 @@ class DummyResponse:
     def __init__(self, payload, status_code=200):
         self._payload = payload
         self.status_code = status_code
-
-    def raise_for_status(self):
-        if self.status_code >= 400:
-            raise RuntimeError("HTTP error")
+        self.ok = status_code < 400
+        self.text = "" if self.ok else str(payload)
 
     def json(self):
         return self._payload
 
 
 def _config() -> RakutenConfig:
-    return RakutenConfig(app_id="dummy-app-id", affiliate_id=None, moshimo_link=_EMPTY_LINK)
+    return RakutenConfig(app_id="dummy-app-id", access_key="dummy-access-key", affiliate_id=None, moshimo_link=_EMPTY_LINK)
 
 
 def test_search_products_parses_items(monkeypatch):
@@ -49,6 +47,7 @@ def test_search_products_parses_items(monkeypatch):
 
     def fake_get(url, params, timeout):
         assert params["applicationId"] == "dummy-app-id"
+        assert params["accessKey"] == "dummy-access-key"
         assert params["keyword"] == "傘"
         return DummyResponse(payload)
 
@@ -66,7 +65,17 @@ def test_search_products_parses_items(monkeypatch):
     assert product.review_count == 12
 
 
-def test_search_products_raises_on_api_error(monkeypatch):
+def test_search_products_raises_on_http_error(monkeypatch):
+    def fake_get(url, params, timeout):
+        return DummyResponse({"error": "invalid_parameter"}, status_code=400)
+
+    monkeypatch.setattr(rakuten.requests, "get", fake_get)
+
+    with pytest.raises(RuntimeError, match="HTTP 400"):
+        rakuten.search_products(_config(), "傘")
+
+
+def test_search_products_raises_on_api_error_in_200_body(monkeypatch):
     def fake_get(url, params, timeout):
         return DummyResponse({"error": "wrong_parameter", "error_description": "bad"})
 
@@ -76,7 +85,7 @@ def test_search_products_raises_on_api_error(monkeypatch):
         rakuten.search_products(_config(), "傘")
 
 
-def test_search_products_requires_app_id():
-    config = RakutenConfig(app_id=None, affiliate_id=None, moshimo_link=_EMPTY_LINK)
+def test_search_products_requires_app_id_and_access_key():
+    config = RakutenConfig(app_id=None, access_key=None, affiliate_id=None, moshimo_link=_EMPTY_LINK)
     with pytest.raises(ValueError):
         rakuten.search_products(config, "傘")

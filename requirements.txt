@@ -1,5 +1,5 @@
 anthropic>=0.40.0
 requests>=2.31.0
-python-amazon-paapi>=5.0.1
+python-amazon-paapi>=7.0.0
 PyYAML>=6.0.1
 python-dotenv>=1.0.1

@@ -46,25 +46,28 @@ class MoshimoLinkConfig:
 @dataclass(frozen=True)
 class RakutenConfig:
     app_id: str | None
+    access_key: str | None
     affiliate_id: str | None
     moshimo_link: MoshimoLinkConfig
 
     @property
     def is_configured(self) -> bool:
-        return bool(self.app_id)
+        return bool(self.app_id and self.access_key)
 
 
 @dataclass(frozen=True)
 class AmazonConfig:
-    access_key: str | None
-    secret_key: str | None
+    """Amazon Creators API(旧PA-API。2026年5月にPA-APIは終了し移行必須)の認証情報。"""
+
+    credential_id: str | None
+    credential_secret: str | None
     partner_tag: str | None
     country: str
     moshimo_link: MoshimoLinkConfig
 
     @property
     def is_configured(self) -> bool:
-        return bool(self.access_key and self.secret_key and self.partner_tag)
+        return bool(self.credential_id and self.credential_secret and self.partner_tag)
 
 
 @dataclass(frozen=True)
@@ -109,12 +112,13 @@ def load_config() -> Config:
         claude_model=_get("CLAUDE_MODEL", default="claude-sonnet-5"),
         rakuten=RakutenConfig(
             app_id=_get("RAKUTEN_APP_ID"),
+            access_key=_get("RAKUTEN_ACCESS_KEY"),
             affiliate_id=_get("RAKUTEN_AFFILIATE_ID"),
             moshimo_link=rakuten_moshimo,
         ),
         amazon=AmazonConfig(
-            access_key=_get("AMAZON_ACCESS_KEY"),
-            secret_key=_get("AMAZON_SECRET_KEY"),
+            credential_id=_get("AMAZON_CREDENTIAL_ID"),
+            credential_secret=_get("AMAZON_CREDENTIAL_SECRET"),
             partner_tag=_get("AMAZON_PARTNER_TAG"),
             country=_get("AMAZON_COUNTRY", default="JP"),
             moshimo_link=amazon_moshimo,

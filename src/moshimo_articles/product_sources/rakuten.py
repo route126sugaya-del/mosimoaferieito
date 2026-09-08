@@ -1,7 +1,9 @@
 """楽天市場 商品検索API (IchibaItem Search) 連携。
 
 API仕様: https://webservice.rakuten.co.jp/documentation/ichiba-item-search
-無料・審査不要でアプリIDを発行できる。レート制限は1秒あたり1リクエストが目安。
+2026年2月の認証システム刷新により、旧来の applicationId のみのリクエストは
+非推奨となった。新規にアプリ登録をやり直して発行される applicationId と
+accessKey(pk_から始まる値)の両方が必須。
 """
 from __future__ import annotations
 
@@ -14,7 +16,7 @@ from moshimo_articles.models import Product
 
 logger = logging.getLogger(__name__)
 
-_ENDPOINT = "https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601"
+_ENDPOINT = "https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260701"
 
 
 def search_products(
@@ -25,10 +27,11 @@ def search_products(
 ) -> list[Product]:
     """キーワードで楽天市場の商品を検索し、レビュー件数順(既定)で返す。"""
     if not config.is_configured:
-        raise ValueError("RakutenConfig が未設定です(RAKUTEN_APP_ID が必要)。")
+        raise ValueError("RakutenConfig が未設定です(RAKUTEN_APP_ID と RAKUTEN_ACCESS_KEY が必要)。")
 
     params = {
         "applicationId": config.app_id,
+        "accessKey": config.access_key,
         "keyword": keyword,
         "hits": min(hits, 30),
         "sort": sort,
@@ -39,7 +42,10 @@ def search_products(
         params["affiliateId"] = config.affiliate_id
 
     response = requests.get(_ENDPOINT, params=params, timeout=15)
-    response.raise_for_status()
+    if not response.ok:
+        raise RuntimeError(
+            f"楽天API エラー: HTTP {response.status_code} - {response.text[:500]}"
+        )
     payload = response.json()
 
     if "error" in payload:

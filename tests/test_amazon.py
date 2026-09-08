@@ -1,4 +1,4 @@
-"""Amazon PA-API連携のテスト(ライブラリ内部構造への依存部分)。"""
+"""Amazon Creators API連携のテスト(ライブラリ内部構造への依存部分)。"""
 from __future__ import annotations
 
 from types import SimpleNamespace
@@ -25,7 +25,9 @@ def test_to_product_maps_fields():
             features=SimpleNamespace(display_values=["特徴1", "特徴2"]),
         ),
         images=SimpleNamespace(primary=SimpleNamespace(large=SimpleNamespace(url="https://example.com/img.jpg"))),
-        offers=SimpleNamespace(listings=[SimpleNamespace(price=SimpleNamespace(amount=1980))]),
+        offers_v2=SimpleNamespace(
+            listings=[SimpleNamespace(price=SimpleNamespace(money=SimpleNamespace(amount=1980)))]
+        ),
     )
 
     product = _to_product(item)

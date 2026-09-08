@@ -9,7 +9,7 @@
 ```
 [config/keywords.yaml からキーワードを選択]
         ↓
-[楽天市場API / Amazon PA-API で商品検索]
+[楽天市場API / Amazon Creators API で商品検索]
         ↓
 [data/published_history.json と照合し、未紹介の商品を選択]
         ↓
@@ -26,12 +26,17 @@
 
 - **もしもアフィリエイトは商品検索・記事投稿の公開APIを提供していません。**
   「かんたんリンク」は管理画面上のGUI機能であり、外部から自動呼び出しはできません。
-  そのため本システムは、①楽天市場API・Amazon PA-APIで商品データを取得し、
+  そのため本システムは、①楽天市場API・Amazon Creators APIで商品データを取得し、
   ②もしもアフィリエイトの管理画面で提携ごとに発行される `a_id`/`p_id`/`pc_id`/`pl_id` を使って
   通常の商品URLを `https://af.moshimo.com/af/c/click?...&url=<商品URL>` 形式の
   アフィリエイトリンクに変換する、という構成を取っています。
-- Amazon PA-APIは**直近180日で3件以上の紹介実績**が無いとアクセスキーが失効するため、
-  新規サイトでは楽天市場API(無料・審査不要)を主データソースにすることを推奨します。
+- **楽天市場APIは2026年2月の認証システム刷新により、`applicationId` に加えて
+  `accessKey` の指定が必須になりました。** 古いアプリのままだと400エラーになるため、
+  新規にアプリ登録をやり直す必要があります。
+- **Amazon Product Advertising API (PA-API) は2026年5月に完全終了し、
+  後継の Amazon Creators API への移行が必須になりました。** 認証方式もAWS Signature V4から
+  OAuth 2.0(`Credential ID` / `Credential Secret`)に変わっており、Amazonアソシエイト管理画面の
+  「CreatorsAPI」タブから新規に発行する必要があります。
 - Googleは機械的な商品情報の羅列だけの自動生成記事を低く評価します。本システムは
   Claude APIで商品説明文を丸写しせず再構成する設計にしていますが、**最終的な記事品質・
   一次情報としての価値は運用者の責任で担保してください。**
@@ -53,8 +58,8 @@
 | サービス | 用途 | 取得先 |
 |---|---|---|
 | Anthropic API | 記事本文生成 | https://console.anthropic.com/ |
-| 楽天ウェブサービス | 商品検索(無料・審査不要) | https://webservice.rakuten.co.jp/ |
-| Amazon PA-API(任意) | 商品検索 | Amazonアソシエイト管理画面(紹介実績が必要) |
+| 楽天ウェブサービス | 商品検索(無料・審査不要) | https://webservice.rakuten.co.jp/ で新規アプリ登録し `applicationId` と `accessKey`(`pk_`から始まる値)の両方を取得。2026年2月の認証刷新以前に発行した古いIDは使えないため、既存のものがあっても登録し直すこと |
+| Amazon Creators API(任意) | 商品検索 | Amazonアソシエイト管理画面(Associates Central)の「CreatorsAPI」タブから `Credential ID` / `Credential Secret` を発行(旧PA-APIのキーは使用不可) |
 | もしもアフィリエイト | アフィリエイトリンク発行 | 各広告主と提携後、プロモーション詳細の「広告リンクタグ」から `a_id`/`p_id`/`pc_id`/`pl_id` を取得 |
 | WordPress | 記事投稿先 | 対象サイトのユーザープロフィール画面で「アプリケーションパスワード」を発行(通常のログインパスワードは使わない) |
 
@@ -86,8 +91,8 @@ pytest tests/ -v
 **Secrets(必須)**
 - `ANTHROPIC_API_KEY`
 - `WP_BASE_URL` / `WP_USERNAME` / `WP_APP_PASSWORD`
-- `RAKUTEN_APP_ID`(楽天を使う場合)
-- `AMAZON_ACCESS_KEY` / `AMAZON_SECRET_KEY` / `AMAZON_PARTNER_TAG`(Amazonを使う場合)
+- `RAKUTEN_APP_ID` / `RAKUTEN_ACCESS_KEY`(楽天を使う場合。両方必須)
+- `AMAZON_CREDENTIAL_ID` / `AMAZON_CREDENTIAL_SECRET` / `AMAZON_PARTNER_TAG`(Amazonを使う場合)
 - `MOSHIMO_RAKUTEN_A_ID` / `MOSHIMO_RAKUTEN_P_ID` / `MOSHIMO_RAKUTEN_PC_ID` / `MOSHIMO_RAKUTEN_PL_ID`(楽天を使う場合)
 - `MOSHIMO_AMAZON_A_ID` / `MOSHIMO_AMAZON_P_ID` / `MOSHIMO_AMAZON_PC_ID` / `MOSHIMO_AMAZON_PL_ID`(Amazonを使う場合)
 
@@ -122,7 +127,7 @@ src/moshimo_articles/
   main.py                全体のオーケストレーション
   product_sources/
     rakuten.py           楽天市場 商品検索API
-    amazon.py            Amazon PA-API
+    amazon.py            Amazon Creators API
   affiliate/
     moshimo.py           もしもアフィリエイトのリンク変換
   content/
