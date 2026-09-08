@@ -64,6 +64,7 @@ def search_products(
 
     parsed_referer = urlparse(config.referer)
     origin = f"{parsed_referer.scheme}://{parsed_referer.netloc}"
+    logger.info("楽天APIへ送信するヘッダー: Referer=%r Origin=%r", config.referer, origin)
 
     _throttle()
     response = requests.get(
