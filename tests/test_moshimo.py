@@ -38,7 +38,11 @@ def _make_config(rakuten_link=None, amazon_link=None) -> Config:
         anthropic_api_key="key",
         claude_model="claude-sonnet-5",
         rakuten=RakutenConfig(
-            app_id="app", access_key="access-key", affiliate_id=None, moshimo_link=rakuten_link or _EMPTY_LINK
+            app_id="app",
+            access_key="access-key",
+            referer="https://example.com/",
+            affiliate_id=None,
+            moshimo_link=rakuten_link or _EMPTY_LINK,
         ),
         amazon=AmazonConfig(
             credential_id="cid",

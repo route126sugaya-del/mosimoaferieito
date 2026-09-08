@@ -32,7 +32,9 @@
   アフィリエイトリンクに変換する、という構成を取っています。
 - **楽天市場APIは2026年2月の認証システム刷新により、`applicationId` に加えて
   `accessKey` の指定が必須になりました。** 古いアプリのままだと400エラーになるため、
-  新規にアプリ登録をやり直す必要があります。
+  新規にアプリ登録をやり直す必要があります。またリクエスト元検証のため `Referer` ヘッダーも
+  必須になっており、事前にアプリ管理画面の「許可されたWebサイト」へ登録したURLを
+  `RAKUTEN_REFERER` として送る必要があります(未設定だとHTTP 403エラー)。
 - **Amazon Product Advertising API (PA-API) は2026年5月に完全終了し、
   後継の Amazon Creators API への移行が必須になりました。** 認証方式もAWS Signature V4から
   OAuth 2.0(`Credential ID` / `Credential Secret`)に変わっており、Amazonアソシエイト管理画面の
@@ -58,7 +60,7 @@
 | サービス | 用途 | 取得先 |
 |---|---|---|
 | Anthropic API | 記事本文生成 | https://console.anthropic.com/ |
-| 楽天ウェブサービス | 商品検索(無料・審査不要) | https://webservice.rakuten.co.jp/ で新規アプリ登録し `applicationId` と `accessKey`(`pk_`から始まる値)の両方を取得。2026年2月の認証刷新以前に発行した古いIDは使えないため、既存のものがあっても登録し直すこと |
+| 楽天ウェブサービス | 商品検索(無料・審査不要) | https://webservice.rakuten.co.jp/ で新規アプリ登録し `applicationId` と `accessKey`(`pk_`から始まる値)の両方を取得。2026年2月の認証刷新以前に発行した古いIDは使えないため、既存のものがあっても登録し直すこと。さらにアプリ管理画面の「許可されたWebサイト」に任意のURL(例: 投稿先WordPressのURL)を登録し、同じURLを `RAKUTEN_REFERER` に設定すること(未設定だとHTTP 403エラーになる) |
 | Amazon Creators API(任意) | 商品検索 | Amazonアソシエイト管理画面(Associates Central)の「CreatorsAPI」タブから `Credential ID` / `Credential Secret` を発行(旧PA-APIのキーは使用不可) |
 | もしもアフィリエイト | アフィリエイトリンク発行 | 各広告主と提携後、プロモーション詳細の「広告リンクタグ」から `a_id`/`p_id`/`pc_id`/`pl_id` を取得 |
 | WordPress | 記事投稿先 | 対象サイトのユーザープロフィール画面で「アプリケーションパスワード」を発行(通常のログインパスワードは使わない) |
@@ -91,7 +93,7 @@ pytest tests/ -v
 **Secrets(必須)**
 - `ANTHROPIC_API_KEY`
 - `WP_BASE_URL` / `WP_USERNAME` / `WP_APP_PASSWORD`
-- `RAKUTEN_APP_ID` / `RAKUTEN_ACCESS_KEY`(楽天を使う場合。両方必須)
+- `RAKUTEN_APP_ID` / `RAKUTEN_ACCESS_KEY` / `RAKUTEN_REFERER`(楽天を使う場合。3つとも必須)
 - `AMAZON_CREDENTIAL_ID` / `AMAZON_CREDENTIAL_SECRET` / `AMAZON_PARTNER_TAG`(Amazonを使う場合)
 - `MOSHIMO_RAKUTEN_A_ID` / `MOSHIMO_RAKUTEN_P_ID` / `MOSHIMO_RAKUTEN_PC_ID` / `MOSHIMO_RAKUTEN_PL_ID`(楽天を使う場合)
 - `MOSHIMO_AMAZON_A_ID` / `MOSHIMO_AMAZON_P_ID` / `MOSHIMO_AMAZON_PC_ID` / `MOSHIMO_AMAZON_PL_ID`(Amazonを使う場合)

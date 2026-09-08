@@ -20,8 +20,20 @@ class DummyResponse:
         return self._payload
 
 
+@pytest.fixture(autouse=True)
+def _skip_throttle(monkeypatch):
+    # レート制限用のsleepでテストが遅くならないよう無効化する。
+    monkeypatch.setattr(rakuten, "_throttle", lambda: None)
+
+
 def _config() -> RakutenConfig:
-    return RakutenConfig(app_id="dummy-app-id", access_key="dummy-access-key", affiliate_id=None, moshimo_link=_EMPTY_LINK)
+    return RakutenConfig(
+        app_id="dummy-app-id",
+        access_key="dummy-access-key",
+        referer="https://example.com/",
+        affiliate_id=None,
+        moshimo_link=_EMPTY_LINK,
+    )
 
 
 def test_search_products_parses_items(monkeypatch):
@@ -45,10 +57,11 @@ def test_search_products_parses_items(monkeypatch):
         ]
     }
 
-    def fake_get(url, params, timeout):
+    def fake_get(url, params, headers, timeout):
         assert params["applicationId"] == "dummy-app-id"
         assert params["accessKey"] == "dummy-access-key"
         assert params["keyword"] == "傘"
+        assert headers["Referer"] == "https://example.com/"
         return DummyResponse(payload)
 
     monkeypatch.setattr(rakuten.requests, "get", fake_get)
@@ -66,7 +79,7 @@ def test_search_products_parses_items(monkeypatch):
 
 
 def test_search_products_raises_on_http_error(monkeypatch):
-    def fake_get(url, params, timeout):
+    def fake_get(url, params, headers, timeout):
         return DummyResponse({"error": "invalid_parameter"}, status_code=400)
 
     monkeypatch.setattr(rakuten.requests, "get", fake_get)
@@ -76,7 +89,7 @@ def test_search_products_raises_on_http_error(monkeypatch):
 
 
 def test_search_products_raises_on_api_error_in_200_body(monkeypatch):
-    def fake_get(url, params, timeout):
+    def fake_get(url, params, headers, timeout):
         return DummyResponse({"error": "wrong_parameter", "error_description": "bad"})
 
     monkeypatch.setattr(rakuten.requests, "get", fake_get)
@@ -85,7 +98,9 @@ def test_search_products_raises_on_api_error_in_200_body(monkeypatch):
         rakuten.search_products(_config(), "傘")
 
 
-def test_search_products_requires_app_id_and_access_key():
-    config = RakutenConfig(app_id=None, access_key=None, affiliate_id=None, moshimo_link=_EMPTY_LINK)
+def test_search_products_requires_app_id_access_key_and_referer():
+    config = RakutenConfig(
+        app_id=None, access_key=None, referer=None, affiliate_id=None, moshimo_link=_EMPTY_LINK
+    )
     with pytest.raises(ValueError):
         rakuten.search_products(config, "傘")

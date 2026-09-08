@@ -47,12 +47,13 @@ class MoshimoLinkConfig:
 class RakutenConfig:
     app_id: str | None
     access_key: str | None
+    referer: str | None
     affiliate_id: str | None
     moshimo_link: MoshimoLinkConfig
 
     @property
     def is_configured(self) -> bool:
-        return bool(self.app_id and self.access_key)
+        return bool(self.app_id and self.access_key and self.referer)
 
 
 @dataclass(frozen=True)
@@ -113,6 +114,7 @@ def load_config() -> Config:
         rakuten=RakutenConfig(
             app_id=_get("RAKUTEN_APP_ID"),
             access_key=_get("RAKUTEN_ACCESS_KEY"),
+            referer=_get("RAKUTEN_REFERER"),
             affiliate_id=_get("RAKUTEN_AFFILIATE_ID"),
             moshimo_link=rakuten_moshimo,
         ),
