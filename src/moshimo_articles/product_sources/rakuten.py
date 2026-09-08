@@ -5,13 +5,16 @@ API仕様: https://webservice.rakuten.co.jp/documentation/ichiba-item-search
 非推奨となった。新規にアプリ登録をやり直して発行される applicationId と
 accessKey(pk_から始まる値)の両方が必須。また新APIはリクエスト元を
 検証するため、事前にアプリ管理画面の「許可されたWebサイト」に登録した
-ドメインを Referer ヘッダーとして送信する必要がある(RAKUTEN_REFERER)。
+ドメインを Referer / Origin ヘッダーとして送信する必要がある(RAKUTEN_REFERER)。
+Refererのみだと REQUEST_CONTEXT_BODY_HTTP_REFERRER_MISSING になるため、
+Origin(スキーム+ホストのみ)も併せて送る。
 レート制限は1秒あたり1リクエストが上限のため、呼び出し間隔を自動で空ける。
 """
 from __future__ import annotations
 
 import logging
 import time
+from urllib.parse import urlparse
 
 import requests
 
@@ -59,11 +62,14 @@ def search_products(
     if config.affiliate_id:
         params["affiliateId"] = config.affiliate_id
 
+    parsed_referer = urlparse(config.referer)
+    origin = f"{parsed_referer.scheme}://{parsed_referer.netloc}"
+
     _throttle()
     response = requests.get(
         _ENDPOINT,
         params=params,
-        headers={"Referer": config.referer},
+        headers={"Referer": config.referer, "Origin": origin},
         timeout=15,
     )
     if not response.ok:

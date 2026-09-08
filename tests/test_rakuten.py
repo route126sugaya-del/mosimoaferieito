@@ -62,6 +62,7 @@ def test_search_products_parses_items(monkeypatch):
         assert params["accessKey"] == "dummy-access-key"
         assert params["keyword"] == "傘"
         assert headers["Referer"] == "https://example.com/"
+        assert headers["Origin"] == "https://example.com"
         return DummyResponse(payload)
 
     monkeypatch.setattr(rakuten.requests, "get", fake_get)
