@@ -12,6 +12,8 @@
     "review_count": 6068,
     "shop_name": "くらしのeショップ",
     "source": "rakuten",
-    "status": "pending"
+    "status": "used",
+    "used_at": "2026-10-12T11:59:00+00:00",
+    "wordpress_post_id": 8394
   }
 }
