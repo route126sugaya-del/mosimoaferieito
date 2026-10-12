@@ -13,7 +13,6 @@ from moshimo_articles.config import (
     Config,
     MoshimoLinkConfig,
     RakutenConfig,
-    WordPressConfig,
 )
 from moshimo_articles.models import Product
 
@@ -35,8 +34,6 @@ def test_build_link_raises_when_not_configured():
 
 def _make_config(rakuten_link=None, amazon_link=None) -> Config:
     return Config(
-        anthropic_api_key="key",
-        claude_model="claude-sonnet-5",
         rakuten=RakutenConfig(
             app_id="app",
             access_key="access-key",
@@ -51,10 +48,7 @@ def _make_config(rakuten_link=None, amazon_link=None) -> Config:
             country="JP",
             moshimo_link=amazon_link or _EMPTY_LINK,
         ),
-        wordpress=WordPressConfig(
-            base_url="https://example.com", username="u", app_password="p", post_status="draft"
-        ),
-        articles_per_run=1,
+        products_per_run=1,
     )
 
 

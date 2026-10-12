@@ -72,28 +72,18 @@ class AmazonConfig:
 
 
 @dataclass(frozen=True)
-class WordPressConfig:
-    base_url: str
-    username: str
-    app_password: str
-    post_status: str
-
-
-@dataclass(frozen=True)
 class Config:
-    anthropic_api_key: str
-    claude_model: str
     rakuten: RakutenConfig
     amazon: AmazonConfig
-    wordpress: WordPressConfig
-    articles_per_run: int
+    products_per_run: int
 
 
 def load_config() -> Config:
     """環境変数から Config を組み立てる。
 
-    記事生成(Claude)とWordPress投稿は必須。楽天/Amazonの商品ソースは
-    どちらか一方でも設定されていれば動作する(main側でチェックする)。
+    このリポジトリの役割は商品検索ともしもアフィリエイトリンクの生成までで、
+    記事の執筆・WordPress投稿は行わない(note-blog-auto側が担う。2026-10-12方針変更)。
+    楽天/Amazonの商品ソースはどちらか一方でも設定されていれば動作する(main側でチェックする)。
     """
     rakuten_moshimo = MoshimoLinkConfig(
         a_id=_get("MOSHIMO_RAKUTEN_A_ID"),
@@ -109,8 +99,6 @@ def load_config() -> Config:
     )
 
     return Config(
-        anthropic_api_key=_get("ANTHROPIC_API_KEY", required=True),
-        claude_model=_get("CLAUDE_MODEL", default="claude-sonnet-5"),
         rakuten=RakutenConfig(
             app_id=_get("RAKUTEN_APP_ID"),
             access_key=_get("RAKUTEN_ACCESS_KEY"),
@@ -125,11 +113,5 @@ def load_config() -> Config:
             country=_get("AMAZON_COUNTRY", default="JP"),
             moshimo_link=amazon_moshimo,
         ),
-        wordpress=WordPressConfig(
-            base_url=(_get("WP_BASE_URL", required=True) or "").rstrip("/"),
-            username=_get("WP_USERNAME", required=True),
-            app_password=_get("WP_APP_PASSWORD", required=True),
-            post_status=_get("WP_POST_STATUS", default="draft"),
-        ),
-        articles_per_run=int(_get("ARTICLES_PER_RUN", default="1")),
+        products_per_run=int(_get("PRODUCTS_PER_RUN", default="1")),
     )

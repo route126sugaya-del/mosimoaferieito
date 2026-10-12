@@ -1,23 +1,26 @@
-"""記事生成〜WordPress投稿までの一連の処理を実行するエントリポイント。
+"""商品検索〜もしもアフィリエイトリンク生成〜キュー保存までを実行するエントリポイント。
+
+記事の執筆・WordPress投稿はこのリポジトリでは行わない(2026-10-12方針変更)。
+note-blog-auto側のClaude実行が、ここで積んだキュー(data/product_queue.json)を
+読み、既存ブログ(kamidera.com)の文体・カテゴリ運用ルールに沿って記事を書く。
 
 使い方:
     python -m moshimo_articles.main
 """
 from __future__ import annotations
 
+import dataclasses
 import logging
 import random
 import sys
 
 from moshimo_articles.affiliate.moshimo import MoshimoLinkNotConfiguredError, build_link_for_product
 from moshimo_articles.config import Config, ConfigError, load_config
-from moshimo_articles.content.generator import generate_article
-from moshimo_articles.history import PublishedHistory
 from moshimo_articles.keywords import load_keywords
 from moshimo_articles.models import Product
 from moshimo_articles.product_sources import amazon as amazon_source
 from moshimo_articles.product_sources import rakuten as rakuten_source
-from moshimo_articles.publish.wordpress import WordPressClient
+from moshimo_articles.queue import ProductQueue
 
 logging.basicConfig(
     level=logging.INFO,
@@ -45,45 +48,25 @@ def collect_candidates(config: Config, keyword: str) -> list[Product]:
     return candidates
 
 
-def pick_unpublished_product(candidates: list[Product], history: PublishedHistory) -> Product | None:
-    """まだ記事化していない商品を、レビュー数順(=検索結果の順序)で先頭から選ぶ。"""
+def pick_new_product(candidates: list[Product], queue: ProductQueue) -> Product | None:
+    """まだキューに入れていない商品を、レビュー数順(=検索結果の順序)で先頭から選ぶ。"""
     for product in candidates:
-        if product.item_url and not history.has_published(product.key):
+        if product.item_url and not queue.has_entry(product.key):
             return product
     return None
 
 
-def process_one_article(
-    config: Config,
-    product: Product,
-    history: PublishedHistory,
-    wp_client: WordPressClient,
-) -> bool:
-    """1商品について記事生成〜投稿〜履歴記録までを行う。成功したらTrue。"""
+def enqueue_one_product(config: Config, product: Product, queue: ProductQueue) -> bool:
+    """1商品についてもしもリンクを生成し、キューに積む。成功したらTrue。"""
     try:
         affiliate_link = build_link_for_product(product, config)
     except MoshimoLinkNotConfiguredError:
         logger.exception("もしもアフィリエイトリンクの生成に失敗しました(product=%s)", product.name)
         return False
 
-    try:
-        article = generate_article(
-            product=product,
-            affiliate_link=affiliate_link,
-            api_key=config.anthropic_api_key,
-            model=config.claude_model,
-        )
-    except Exception:
-        logger.exception("記事生成に失敗しました(product=%s)", product.name)
-        return False
-
-    try:
-        result = wp_client.create_post(article, product)
-    except Exception:
-        logger.exception("WordPressへの投稿に失敗しました(product=%s)", product.name)
-        return False
-
-    history.record(product.key, article.title, result.get("link"))
+    entry = dataclasses.asdict(product)
+    entry["affiliate_url"] = affiliate_link
+    queue.add(product.key, entry)
     return True
 
 
@@ -99,31 +82,30 @@ def main() -> int:
         return 1
 
     keywords = load_keywords()
-    history = PublishedHistory()
-    wp_client = WordPressClient(config.wordpress)
+    queue = ProductQueue()
 
-    generated = 0
+    added = 0
     attempts = 0
-    max_attempts = max(config.articles_per_run * 5, 10)
+    max_attempts = max(config.products_per_run * 5, 10)
     shuffled_keywords = random.sample(keywords, k=len(keywords))
 
-    while generated < config.articles_per_run and attempts < max_attempts:
+    while added < config.products_per_run and attempts < max_attempts:
         keyword = shuffled_keywords[attempts % len(shuffled_keywords)]
         attempts += 1
 
         candidates = collect_candidates(config, keyword)
-        product = pick_unpublished_product(candidates, history)
+        product = pick_new_product(candidates, queue)
         if product is None:
-            logger.info("キーワード「%s」では未紹介の商品が見つかりませんでした", keyword)
+            logger.info("キーワード「%s」では未登録の商品が見つかりませんでした", keyword)
             continue
 
-        if process_one_article(config, product, history, wp_client):
-            generated += 1
+        if enqueue_one_product(config, product, queue):
+            added += 1
 
-    history.save()
+    queue.save()
 
-    logger.info("完了: %d/%d 件の記事を生成しました", generated, config.articles_per_run)
-    return 0 if generated > 0 else 1
+    logger.info("完了: %d/%d 件の商品をキューに追加しました", added, config.products_per_run)
+    return 0 if added > 0 else 1
 
 
 if __name__ == "__main__":
