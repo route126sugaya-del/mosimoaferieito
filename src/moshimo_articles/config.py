@@ -113,5 +113,5 @@ def load_config() -> Config:
             country=_get("AMAZON_COUNTRY", default="JP"),
             moshimo_link=amazon_moshimo,
         ),
-        products_per_run=int(_get("PRODUCTS_PER_RUN", default="1")),
+        products_per_run=int(_get("PRODUCTS_PER_RUN", default="5")),
     )

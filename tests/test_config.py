@@ -41,7 +41,7 @@ def test_load_config_reads_environment(monkeypatch):
 
     assert cfg.rakuten.is_configured is True
     assert cfg.amazon.is_configured is False
-    assert cfg.products_per_run == 1
+    assert cfg.products_per_run == 5
 
 
 def test_load_config_with_no_env_does_not_raise():

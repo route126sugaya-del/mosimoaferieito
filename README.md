@@ -92,7 +92,8 @@ pytest tests/ -v
 
 **Variables(任意、未設定時は既定値を使用)**
 - `AMAZON_COUNTRY`(既定: `JP`)
-- `PRODUCTS_PER_RUN`(既定: `1`)
+- `PRODUCTS_PER_RUN`(既定: `5`。note-blog-auto側が毎日の記事でも商品紹介の機会を
+  積極的に探すようになったため、2026-10-13にデフォルトを1→5に変更した)
 
 設定後、`.github/workflows/generate-articles.yml` が毎日 UTC 23:00(JST 翌8:00)に自動実行されます。
 Actionsタブから `workflow_dispatch` で手動実行して動作確認することもできます。
