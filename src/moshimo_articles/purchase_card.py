@@ -38,6 +38,16 @@ def render_purchase_card(ad: dict) -> str:
 #{frame}{{box-sizing:border-box;width:100%;border:1px solid #ddd;border-radius:8px;padding:20px;background:#fff;}}
 #{frame} .easyLink-box{{box-sizing:border-box;border:0!important;margin:0!important;padding:0!important;width:100%!important;max-width:100%!important;}}
 #{frame} .purchase-amazon-button{{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:238px;max-width:100%;min-height:40px;margin:16px auto 0;padding:10px 16px;background:#ff9900;color:#111;border-radius:4px;font-size:14px;font-weight:700;line-height:1.5;text-decoration:none;text-align:center;}}
+
+#{frame} .easyLink-box{{display:grid!important;grid-template-columns:160px minmax(0,1fr);gap:16px 20px;}}
+#{frame} .easyLink-info{{display:contents!important;}}
+#{frame} .easyLink-img{{grid-column:1;grid-row:1;float:none!important;width:160px!important;margin:0!important;}}
+#{frame} .easyLink-info-name{{grid-column:2;grid-row:1;margin:0!important;}}
+#{frame} .easyLink-info-maker:empty,#{frame} .easyLink-info-model:empty{{display:none!important;}}
+#{frame} .easyLink-info-btn{{grid-column:1/-1;width:100%;margin:0!important;padding:0!important;}}
+#{frame} .easyLink-info-btn a{{display:flex!important;align-items:center;justify-content:center;box-sizing:border-box;width:238px!important;max-width:100%;min-height:40px;margin:0 auto!important;padding:10px 16px!important;border-radius:4px;font-size:14px!important;font-weight:700;line-height:1.5;text-decoration:none!important;text-align:center;}}
+@media(max-width:600px){{#{frame} .easyLink-box{{grid-template-columns:minmax(0,1fr);}}#{frame} .easyLink-img{{grid-column:1;grid-row:auto;justify-self:center;width:100%!important;}}#{frame} .easyLink-info-name{{grid-column:1;grid-row:auto;}}}}
+#{frame} .easyLink-info-btn a,#{frame} .purchase-amazon-button{{height:42px!important;min-height:42px!important;}}
 </style>
 <div id="{frame}">
 {original}
