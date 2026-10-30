@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "ads": [
+    {
+      "id": "sd001",
+      "name": "SanDisk Extreme PRO 256GB",
+      "keywords": ["SDカード", "記録メディア"],
+      "html_file": "ads/sandisk_256gb.html",
+      "source": "moshimo-issued",
+      "reviewed": false,
+      "sha256": "",
+      "enabled": false
+    }
+  ]
+}
