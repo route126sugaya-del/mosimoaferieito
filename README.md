@@ -206,6 +206,8 @@ API仕様: https://developer.wordpress.org/rest-api/reference/posts/
 
 共通枠は `purchase_card.py` が生成します。もしも発行HTMLをそのまま枠内へ埋め込み、外側の枠と
 この広告にだけ適用するCSS、Amazonボタン、アソシエイト表記を付けます。商品ごとに異なる枠IDを使います。
+楽天ボタンはAmazonと同じ幅238px・高さ42pxで中央に配置し、楽天の下にAmazonを16px間隔で並べます。
+狭い画面では枠の内幅を上限に縮め、画像と商品名も縦に並べます。既存の下書きは自動で差し替えません。
 `amazon` を省略した広告は従来どおり正規HTMLのみで表示します。
 他商品のHTMLやリンク、画像を使い回したり、Amazon用の計測IDを推測で生成したりしません。
 
