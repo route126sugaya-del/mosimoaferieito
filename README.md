@@ -137,3 +137,47 @@ data/product_queue.json  商品キュー(note-blog-auto側が読んで記事化�
 - もしもアフィリエイトの `a_id` 等は広告主(楽天/Amazonなど)ごとに個別に発行されるため、
   紹介するASPを増やす場合はコードとSecretsの両方に追加が必要です。
 - 1回の実行で複数商品をキューに積む場合、`PRODUCTS_PER_RUN` を増やしてください。
+
+## 正規HTML広告の手動掲載（追加機能）
+
+既存の候補収集・別リポジトリの記事化とは独立しています。定期実行には接続していません。
+`data/product_queue.json` の生成リンクを広告マスターへ自動転用しません。
+
+1. もしも管理画面で正規発行されたHTML全文を `ads/sandisk_256gb.html` に保存します。
+   このファイルはGit管理から除外されます。サンプル広告や推測したURLは使用しません。
+2. `data/ad_master.json` の商品名・keywords・html_fileを編集します。
+   HTMLを人が確認し、ファイルのSHA256を `sha256` に記録し、`reviewed` と `enabled` をtrueにします。
+   Windowsでは `Get-FileHash ads/sandisk_256gb.html -Algorithm SHA256` で確認できます（小文字で記録）。
+   SHA256はファイルの改変確認用です。もしも発行元の真正性やHTMLの安全性を自動保証するものではありません。
+3. まずオフラインで確認します（初期台帳は全広告無効なので変更なしが正常です）。
+
+```sh
+python -m moshimo_articles.ad_manager --input tests/fixtures/ad_post.json --dry-run
+```
+
+`local_ad_runs/<実行ID>/` にbefore.json、preview.html、report.jsonが作られます。
+HTMLは原文を保持して広告・PR表記付きで末尾に1件追加します。既存の広告マーカーがあれば追加しません。
+キーワード不一致・全広告無効なら変更しません。プレビューはネット接続時に外部スクリプトを実行する可能性があるため、確認済み正規HTMLのみ登録してください。
+
+実サイトの読取確認は、環境変数 `WP_URL`（例: https://kamidera.com）、`WP_USERNAME`、
+`WP_APPLICATION_PASSWORD` を安全なローカル環境に設定し、以下を実行します。
+パスワードをGitやチャットに保存しないでください。このツールは.envを自動読込しません。
+
+```sh
+python -m moshimo_articles.ad_manager --post-id 123 --dry-run
+```
+
+確認したreport.jsonのcontent_sha256を使い、承認後に下書きだけを更新できます。
+
+```sh
+python -m moshimo_articles.ad_manager --post-id 123 --apply --approve-sha256 <確認したハッシュ>
+```
+
+標準はdry-runで、--apply以外の実行はWordPressへ書き込みません。
+公開済み・予約・非公開・承認待ち記事の更新は禁止しています。公開操作は実装していません。
+更新前バックアップを必ず保存し、直前の本文・更新時刻を再確認します。
+WordPress REST APIにはこの処理で利用できる原子的な比較更新がないため、最終確認と更新の間の競合は完全には防げません。
+他の編集や自動運用を止めて下書きで検証してください。HTMLがWordPressに除去・変更された場合は失敗扱いにし、再実行せずバックアップと記事を確認します。
+復元はbefore.jsonのcontent.rawを下書きへ手動で戻します。バックアップには非公開本文を含むためGit管理対象外です。
+
+API仕様: https://developer.wordpress.org/rest-api/reference/posts/
