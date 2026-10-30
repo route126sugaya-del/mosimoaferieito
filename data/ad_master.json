@@ -4,11 +4,33 @@
     {
       "id": "sd001",
       "name": "SanDisk Extreme PRO 256GB",
-      "keywords": ["SDカード", "記録メディア"],
+      "keywords": [
+        "SDカード",
+        "記録メディア"
+      ],
       "html_file": "ads/sandisk_256gb.html",
       "source": "moshimo-issued",
       "reviewed": false,
       "sha256": "",
+      "enabled": false
+    },
+    {
+      "id": "plaud-notepin-s",
+      "name": "Plaud NotePin S AIボイスレコーダー",
+      "keywords": [
+        "Plaud NotePin S",
+        "PLAUD NotePin S",
+        "NotePin S"
+      ],
+      "html_file": "ads/plaud_notepin_s.html",
+      "source": "moshimo-issued",
+      "reviewed": true,
+      "sha256": "fecec0ef6c9906c3bdd0a4034ae1e1dc1b3c884a310abc9ada7f4542fd31c734",
+      "amazon": {
+        "url": "https://link.amazon/B0gg8JBSp",
+        "source": "amazon-associates-issued",
+        "reviewed": true
+      },
       "enabled": false
     }
   ]
