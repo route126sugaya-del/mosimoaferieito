@@ -32,6 +32,24 @@
         "reviewed": true
       },
       "enabled": false
+    },
+    {
+      "id": "earfun-clip-2",
+      "name": "EarFun Clip 2 イヤーカフ型イヤホン",
+      "keywords": [
+        "EarFun Clip 2",
+        "EarFun Clip2"
+      ],
+      "html_file": "ads/earfun_clip_2.html",
+      "source": "moshimo-issued",
+      "reviewed": true,
+      "sha256": "f339814bae0bec18fd003211552d2daac10ad17339979800880856e337f0e22c",
+      "amazon": {
+        "url": "https://link.amazon/B00ctYZ9s",
+        "source": "amazon-associates-issued",
+        "reviewed": true
+      },
+      "enabled": false
     }
   ]
 }
