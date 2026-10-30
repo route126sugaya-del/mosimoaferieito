@@ -137,3 +137,80 @@ data/product_queue.json  商品キュー(note-blog-auto側が読んで記事化�
 - もしもアフィリエイトの `a_id` 等は広告主(楽天/Amazonなど)ごとに個別に発行されるため、
   紹介するASPを増やす場合はコードとSecretsの両方に追加が必要です。
 - 1回の実行で複数商品をキューに積む場合、`PRODUCTS_PER_RUN` を増やしてください。
+
+## 正規HTML広告の手動掲載（追加機能）
+
+既存の候補収集・別リポジトリの記事化とは独立しています。定期実行には接続していません。
+`data/product_queue.json` の生成リンクを広告マスターへ自動転用しません。
+
+1. もしも管理画面で正規発行されたHTML全文を `ads/sandisk_256gb.html` に保存します。
+   このファイルはGit管理から除外されます。サンプル広告や推測したURLは使用しません。
+2. `data/ad_master.json` の商品名・keywords・html_fileを編集します。
+   HTMLを人が確認し、ファイルのSHA256を `sha256` に記録し、`reviewed` と `enabled` をtrueにします。
+   Windowsでは `Get-FileHash ads/sandisk_256gb.html -Algorithm SHA256` で確認できます（小文字で記録）。
+   SHA256はファイルの改変確認用です。もしも発行元の真正性やHTMLの安全性を自動保証するものではありません。
+3. まずオフラインで確認します（初期台帳は全広告無効なので変更なしが正常です）。
+
+```sh
+python -m moshimo_articles.ad_manager --input tests/fixtures/ad_post.json --dry-run
+```
+
+`local_ad_runs/<実行ID>/` にbefore.json、preview.html、report.jsonが作られます。
+HTMLは原文を保持して広告・PR表記付きで末尾に1件追加します。既存の広告マーカーがあれば追加しません。
+キーワード不一致・全広告無効なら変更しません。プレビューはネット接続時に外部スクリプトを実行する可能性があるため、確認済み正規HTMLのみ登録してください。
+
+実サイトの読取確認は、環境変数 `WP_URL`（例: `https://kamidera.com`）、`WP_USERNAME`、
+`WP_APPLICATION_PASSWORD` を安全なローカル環境に設定し、以下を実行します。
+パスワードをGitやチャットに保存しないでください。このツールは.envを自動読込しません。
+
+```sh
+python -m moshimo_articles.ad_manager --post-id 123 --dry-run
+```
+
+確認したreport.jsonのcontent_sha256を使い、承認後に下書きだけを更新できます。
+
+```sh
+python -m moshimo_articles.ad_manager --post-id 123 --apply --approve-sha256 <確認したハッシュ>
+```
+
+標準はdry-runで、--apply以外の実行はWordPressへ書き込みません。
+公開済み・予約・非公開・承認待ち記事の更新は禁止しています。公開操作は実装していません。
+更新前バックアップを必ず保存し、直前の本文・更新時刻を再確認します。
+WordPress REST APIにはこの処理で利用できる原子的な比較更新がないため、最終確認と更新の間の競合は完全には防げません。
+他の編集や自動運用を止めて下書きで検証してください。HTMLがWordPressに除去・変更された場合は失敗扱いにし、再実行せずバックアップと記事を確認します。
+復元はbefore.jsonのcontent.rawを下書きへ手動で戻します。バックアップには非公開本文を含むためGit管理対象外です。
+
+API仕様: https://developer.wordpress.org/rest-api/reference/posts/
+
+### ほかの商品にも楽天・Amazonを同じ枠で表示する
+
+`data/ad_master.example.json` に、共通枠を使う商品Aと楽天のみの商品Bの登録例があります。
+これは未設定・無効のひな型です。実際に使う商品の項目を `data/ad_master.json` の `ads` 配列へ追加します。
+
+1. 商品ごとに異なる `id`（英小文字・数字・ハイフン・アンダースコア）、正式名、具体的な `keywords` を設定します。
+   「カメラ」など共通語だけでなく、その商品に固有の型番・商品名を使ってください。
+2. もしもの管理画面で掲載先メディアと商品を確認し、発行HTML全文を `ads/<商品ID>.html` に保存します。
+   `html_file` に同じパスを記入し、ファイルのSHA256を `sha256` に小文字で記録します。
+   Windowsでは `(Get-FileHash ads/<商品ID>.html -Algorithm SHA256).Hash.ToLower()` で取得できます。
+   商品と発行元を確認してからトップレベルの `reviewed` をtrueにします。HTML本文は編集しません。
+3. Amazonボタンを付ける商品には `amazon` オブジェクトを追加し、`url` にAmazonアソシエイトで発行した
+   **その商品のリンクをそのまま**記入します。`source` は `amazon-associates-issued` とし、
+   商品・リンク先・アソシエイトタグを確認後に `amazon.reviewed` をtrueにします。
+   対応形式はAmazon.co.jpのタグ付きHTTPSリンク、amzn.to、amzn.asia、link.amazonのHTTPS短縮リンクです。
+   短縮URLの行き先や成果計測をこのプログラムが自動検証するわけではありません。
+   もしもとAmazonの提携がなくても、直接のAmazonアソシエイト発行リンクを使えます。
+4. 最初は `enabled: false` のまま保管します。テスト用に別の台帳を `data/` を持つ専用フォルダーへ用意し、
+   同じ専用フォルダー配下の `ads/` に正規HTMLを置き、その台帳でだけ `enabled: true` にします。
+   `--master <専用フォルダー>/data/ad_master.json --input <確認用記事JSON> --dry-run` で確認できます。
+   記事JSONの形式は `tests/fixtures/ad_post.json` を参照してください。本文に対象の商品名を含めます。
+
+共通枠は `purchase_card.py` が生成します。もしも発行HTMLをそのまま枠内へ埋め込み、外側の枠と
+この広告にだけ適用するCSS、Amazonボタン、アソシエイト表記を付けます。商品ごとに異なる枠IDを使います。
+楽天ボタンはAmazonと同じ幅238px・高さ42pxで中央に配置し、楽天の下にAmazonを16px間隔で並べます。
+狭い画面では枠の内幅を上限に縮め、画像と商品名も縦に並べます。既存の下書きは自動で差し替えません。
+`amazon` を省略した広告は従来どおり正規HTMLのみで表示します。
+他商品のHTMLやリンク、画像を使い回したり、Amazon用の計測IDを推測で生成したりしません。
+
+`enabled: true` はこの手動ツールの候補にする設定です。公開・定期実行を開始する設定ではありません。
+既に広告マーカーが入った記事は変更しません。既存広告の差し替えは自動で行わず、別の下書きで確認してください。
+PRのマージ、公開サイトへの反映、定期実行の接続はこの追加機能では行いません。

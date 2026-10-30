@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "ads": [
+    {
+      "id": "product-a",
+      "name": "商品Aの正式名",
+      "keywords": ["商品Aの正式名"],
+      "html_file": "ads/product_a.html",
+      "source": "moshimo-issued",
+      "reviewed": false,
+      "sha256": "",
+      "amazon": {
+        "url": "",
+        "source": "amazon-associates-issued",
+        "reviewed": false
+      },
+      "enabled": false
+    },
+    {
+      "id": "product-b",
+      "name": "商品Bの正式名（楽天のみ）",
+      "keywords": ["商品Bの正式名"],
+      "html_file": "ads/product_b.html",
+      "source": "moshimo-issued",
+      "reviewed": false,
+      "sha256": "",
+      "enabled": false
+    }
+  ]
+}
