@@ -11,6 +11,8 @@ import sys
 from urllib.parse import urlsplit
 from uuid import uuid4
 
+from moshimo_articles.purchase_card import render_purchase_card, validate_amazon
+
 
 def digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
@@ -35,6 +37,8 @@ def load_ads(master: Path) -> list[dict]:
             raise ValueError("Nonempty keywords required")
         if not ad["enabled"]:
             continue
+        if "amazon" in ad:
+            validate_amazon(ad["amazon"])
         path = (root / ad["html_file"]).resolve()
         if not path.is_relative_to((root / "ads").resolve()) or path.suffix != ".html":
             raise ValueError("HTML must be inside ads/")
@@ -58,7 +62,7 @@ def insert(content: str, ads: list[dict]) -> tuple[str, str | None]:
         return content, None
     ad = ranked[0]
     return (content + '\n<!-- moshimo-ad:' + ad["id"] + ':start -->\n'
-            '<!-- wp:html -->\n<p>広告・PR</p>\n' + ad["html"] +
+            '<!-- wp:html -->\n<p>広告・PR</p>\n' + render_purchase_card(ad) +
             '\n<!-- /wp:html -->\n<!-- moshimo-ad:' + ad["id"] + ':end -->\n', ad["id"])
 
 
