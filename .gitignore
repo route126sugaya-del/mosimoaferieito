@@ -10,3 +10,7 @@ venv/
 .ruff_cache/
 *.log
 .DS_Store
+
+# Local issued HTML and private post backups
+ads/*.html
+local_ad_runs/
