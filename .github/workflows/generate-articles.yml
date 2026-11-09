@@ -37,6 +37,7 @@ jobs:
           AMAZON_CREDENTIAL_SECRET: ${{ secrets.AMAZON_CREDENTIAL_SECRET }}
           AMAZON_PARTNER_TAG: ${{ secrets.AMAZON_PARTNER_TAG }}
           AMAZON_COUNTRY: ${{ vars.AMAZON_COUNTRY }}
+          AMAZON_VERSION: ${{ vars.AMAZON_VERSION }}
           MOSHIMO_RAKUTEN_A_ID: ${{ secrets.MOSHIMO_RAKUTEN_A_ID }}
           MOSHIMO_RAKUTEN_P_ID: ${{ secrets.MOSHIMO_RAKUTEN_P_ID }}
           MOSHIMO_RAKUTEN_PC_ID: ${{ secrets.MOSHIMO_RAKUTEN_PC_ID }}

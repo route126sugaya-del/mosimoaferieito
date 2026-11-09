@@ -39,7 +39,7 @@ def search_products(config: AmazonConfig, keyword: str, hits: int = 10) -> list[
     api = AmazonCreatorsApi(
         credential_id=config.credential_id,
         credential_secret=config.credential_secret,
-        version="2.2",
+        version=config.version,
         tag=config.partner_tag,
         country=country,
     )

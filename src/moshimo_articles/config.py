@@ -64,6 +64,7 @@ class AmazonConfig:
     credential_secret: str | None
     partner_tag: str | None
     country: str
+    version: str
     moshimo_link: MoshimoLinkConfig
 
     @property
@@ -111,6 +112,12 @@ def load_config() -> Config:
             credential_secret=_get("AMAZON_CREDENTIAL_SECRET"),
             partner_tag=_get("AMAZON_PARTNER_TAG"),
             country=_get("AMAZON_COUNTRY", default="JP"),
+            # Creators APIのバージョン。Amazonが認証情報の発行時に割り当てる値で、
+            # OAuth2トークンの取得先エンドポイントを決める(ライブラリのバージョンではない)。
+            # 2026-11-09、ユーザーがAssociates Centralで確認した実際の値は3.3(JP/LWA、
+            # api.amazon.co.jp/auth/o2/token)。固定の"2.2"(EU/Cognito)のままだった
+            # ため、認証情報自体は有効なのに別地域のエンドポイントに弾かれ続けていた。
+            version=_get("AMAZON_VERSION", default="3.3"),
             moshimo_link=amazon_moshimo,
         ),
         products_per_run=int(_get("PRODUCTS_PER_RUN", default="5")),

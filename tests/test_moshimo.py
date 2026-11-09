@@ -46,6 +46,7 @@ def _make_config(rakuten_link=None, amazon_link=None) -> Config:
             credential_secret="csecret",
             partner_tag="t",
             country="JP",
+            version="3.3",
             moshimo_link=amazon_link or _EMPTY_LINK,
         ),
         products_per_run=1,

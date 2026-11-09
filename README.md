@@ -92,6 +92,11 @@ pytest tests/ -v
 
 **Variables(任意、未設定時は既定値を使用)**
 - `AMAZON_COUNTRY`(既定: `JP`)
+- `AMAZON_VERSION`(既定: `3.3`。Credential発行画面に表示される「Version」の値。
+  ライブラリのバージョンではなくOAuth2トークンの取得先エンドポイントを決める値で、
+  Associates Centralの表示と一致していないと認証が`invalid_client`で失敗する。
+  2026-11-09、固定で`2.2`(EU/Cognito向け)になっていたため認証情報自体は有効なのに
+  ずっと認証エラーになっていた不具合を修正し、環境変数化した)
 - `PRODUCTS_PER_RUN`(既定: `5`。note-blog-auto側が毎日の記事でも商品紹介の機会を
   積極的に探すようになったため、2026-10-13にデフォルトを1→5に変更した)
 
